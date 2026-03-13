@@ -1,0 +1,185 @@
+resource_types:
+  - name: cron
+    type: registry-image
+    source:
+      repository: cftoolsmiths/cron-resource
+
+  - name: static
+    type: registry-image
+    source:
+      repository: ktchen14/static-resource
+
+
+resources:
+  - name: scossh
+    type: git
+    source:
+      uri: https://codeberg.org/binary-manu/static-cross-openssh.git
+      branch: ((branch))
+
+  - name: weekly-trigger
+    type: cron
+    source:
+      expression: "30 12 * * 0"
+      location: "Europe/Rome"
+      fire_immediately: false
+
+  - name: codeberg_config
+    type: static
+    source:
+      codeberg.sh: |
+        CODEBERG_HOST="codeberg.org"
+        CODEBERG_USER="binary-manu"
+        CODEBERG_REPO="$CODEBERG_HOST/$CODEBERG_USER/static-cross-openssh"
+        CODEBERG_CI_TAG="weekly"
+
+
+jobs:
+
+  - name: update-pipeline
+    plan:
+
+      - get: weekly-trigger
+        trigger: true
+
+      - get: scossh
+
+      - set_pipeline: self
+        file: scossh/.concourse/ssh.yaml
+
+  - name: build
+    plan:
+
+      - get: weekly-trigger
+        trigger: true
+
+      - get: scossh
+        passed:
+          - update-pipeline
+
+      - get: codeberg_config
+
+      - task: prepare-build-system
+        privileged: true
+        output_mapping:
+          image: builder
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: scossh
+          outputs:
+            - name: image
+          caches:
+            - path: image
+          params:
+            CONTEXT: scossh/docker
+            UNPACK_ROOTFS: "true"
+          run:
+            path: build
+
+      - task: prepare-release
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: codeberg.org/forgejo-contrib/forgejo-cli
+          inputs:
+            - name: codeberg_config
+          run:
+            path: /bin/sh
+            args:
+              - -exc
+              - |
+                  . codeberg_config/codeberg.sh
+                  fj -H "$CODEBERG_HOST" auth add-key "$CODEBERG_USER" '((codeberg_pat))'
+                  fj release delete --repo "$CODEBERG_REPO" "$CODEBERG_CI_TAG" || true
+                  fj tag     delete --repo "$CODEBERG_REPO" "$CODEBERG_CI_TAG" || true
+                  fj release create --repo "$CODEBERG_REPO" --create-tag --branch ((branch)) "$CODEBERG_CI_TAG"
+
+
+      - do:
+        - task: build-scossh
+          image: builder
+          config:
+            platform: linux
+            inputs:
+              - name: scossh
+            outputs:
+              - name: scossh
+            run:
+              path: bash
+              args:
+                - -exc
+                - |
+                    cd scossh
+
+                    export MAKEFLAGS=SHELL="$(which bash)"
+                    make -Orecurse config ((.:conf.config))
+                    make -Orecurse -j$(nproc)
+
+                    cd output/((.:conf.arch))/bin
+                    tar -cf ssh-binaries-for-((.:conf.description)).tar *
+
+        - task: upload-artifact
+          config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source:
+                repository: codeberg.org/forgejo-contrib/forgejo-cli
+            inputs:
+              - name: scossh
+              - name: codeberg_config
+            run:
+              path: /bin/sh
+              args:
+                - -exc
+                - |
+                    . codeberg_config/codeberg.sh
+
+                    cd scossh/output/((.:conf.arch))/bin
+                    fj -H "$CODEBERG_HOST" auth add-key "$CODEBERG_USER" '((codeberg_pat))'
+                    fj release asset create --repo "$CODEBERG_REPO" "$CODEBERG_CI_TAG" \
+                      ssh-binaries-for-((.:conf.description)).tar
+
+        fail_fast: true
+        across:
+
+          - var: conf
+            values:
+            - arch: x86-64
+              config: ARCH=x86-64 PREFIX=/opt/openssh __all__/VERSION=latest
+              description: x86-64
+
+            - arch: x86-64
+              config: ARCH=x86-64 PREFIX=/opt/openssh SHRINK=SHRINK_LEVEL_RUNTIME __all__/VERSION=latest
+              description: x86-64-small
+
+            - arch: armv7-eabihf
+              config: ARCH=armv7-eabihf PREFIX=/system/opt/openssh __all__/VERSION=latest
+              description: armv7-eabihf-android
+
+            - arch: armv7-eabihf
+              config: ARCH=armv7-eabihf PREFIX=/opt/openssh __all__/VERSION=latest
+              description: armv7-eabihf
+
+            - arch: armv7-eabihf
+              config: ARCH=armv7-eabihf PREFIX=/opt/openssh SHRINK=SHRINK_LEVEL_RUNTIME __all__/VERSION=latest
+              description: armv7-eabihf-small
+
+            - arch: aarch64
+              config: ARCH=aarch64 PREFIX=/system/opt/openssh __all__/VERSION=latest
+              description: aarch64-android
+
+            - arch: aarch64
+              config: ARCH=aarch64 PREFIX=/opt/openssh __all__/VERSION=latest
+              description: aarch64
+
+            - arch: aarch64
+              config: ARCH=aarch64 PREFIX=/opt/openssh SHRINK=SHRINK_LEVEL_RUNTIME __all__/VERSION=latest
+              description: aarch64-small
