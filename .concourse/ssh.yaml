@@ -13,6 +13,7 @@ resource_types:
 resources:
   - name: scossh
     type: git
+    check_every: never
     source:
       uri: https://codeberg.org/binary-manu/static-cross-openssh.git
       branch: ((branch))
