@@ -12,6 +12,12 @@ changes. For example, versions `0.2.x` are not compatible with `0.1.x`.
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-03-15
+
+### Changed
+
+* Moved to Codeberg.
+
 ## [0.2.6] - 2025-12-14
 
 ### Changed
