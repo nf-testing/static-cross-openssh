@@ -12,6 +12,10 @@ changes. For example, versions `0.2.x` are not compatible with `0.1.x`.
 
 ## [Unreleased]
 
+### Added
+
+* Sign commits and enable verification in the build pipeline.
+
 ## [0.2.7] - 2026-03-15
 
 ### Changed
