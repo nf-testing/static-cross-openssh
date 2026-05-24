@@ -12,9 +12,13 @@ changes. For example, versions `0.2.x` are not compatible with `0.1.x`.
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-05-24
+
 ### Added
 
 * Sign commits and enable verification in the build pipeline.
+* Add signed digest files for releases.
+* Add verification instructions in the docs.
 
 ## [0.2.7] - 2026-03-15
 
