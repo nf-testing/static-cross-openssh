@@ -253,6 +253,49 @@ Currently, we build for x86-64, ARMv7 and AArch64. ARM versions are available in
 an "Android" variant which simply uses a different installation prefix, to place
 stuff under `/system`.
 
+For each deliverable `X`, there is also a `X.sha256.asc` file that you can
+download to verify the integrity and authenticity of the release. It contains
+the ASCII-armored GPG signature of the SHA256 digest of the file. To check that
+your release is fine, grab both files, place them side by side and then run:
+
+```sh
+# Grab my public key
+gpg --keyserver keys.openpgp.org --recv-keys 40C859330FFDD306ABFD00DF6AEF14B2ECEFA1C8
+
+# Verify the checksum file and then the release
+gpg --verify X.sha256.asc
+sha256sum -c X.sha256.asc
+```
+
+If everything is fine, the output will look like this:
+
+```
+gpg: key 6AEF14B2ECEFA1C8: public key "binary-manu (Release signing) <binary-manu.hbtjr@slmail.me>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+
+gpg: Signature made Sun May 24 16:12:57 2026 CEST
+gpg:                using RSA key 40C859330FFDD306ABFD00DF6AEF14B2ECEFA1C8
+gpg: Good signature from "binary-manu (Release signing) <binary-manu.hbtjr@slmail.me>" [unknown]
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 40C8 5933 0FFD D306 ABFD  00DF 6AEF 14B2 ECEF A1C8
+
+X: OK
+sha256sum: WARNING: 17 lines are improperly formatted
+```
+
+The `gpg` warning can be suppressed by signing my key with one of yours
+to make it trusted, but otherwise does not affect the verification.
+Warnings from `sha256sum` are harmless: it complains about the signature
+lines not being valid digest lines. The important part is that you see
+`X: OK` (or whatever the file is named) in the output.
+
+If either the signature or digest verification fail, _do not use_ the
+release. It may be a build failure on my part, corruption on your disk,
+or maybe some bad people are messing with the repositoryi trying to make
+you run malware.
+
 [original-script]: https://gist.github.com/fumiyas/b4aaee83e113e061d1ee8ab95b35608b
 [bootlin-toolchains]: https://toolchains.bootlin.com/
 
