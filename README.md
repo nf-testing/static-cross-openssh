@@ -1,7 +1,10 @@
 # static-cross-openssh: statically cross-compile ssh
 
+[![Verify file integrity](https://img.shields.io/badge/%F0%9F%94%92Check%20integrity%F0%9F%94%92-blue)](#verify)
+_Read how to check your download is good_
+
 [![Get the binaries](https://img.shields.io/badge/Get%20the%20binaries-8a2be2)](https://codeberg.org/binary-manu/static-cross-openssh/releases/tag/weekly)
-_Click here to grab prebuilt binaries_
+_Then grab it_
 
 _Warning: if you already used this project, please skim through the docs
 again, as a new major rewrite is out and some things work differently._
@@ -245,6 +248,8 @@ your device, if any):
 
 ## Prebuilt binaries
 
+<a name=verify></a>
+
 The latest weekly build from the latest package versions and toolchain
 is available as binary packages. Click on the link at the top of the
 page or go to the releases pane.
@@ -300,6 +305,7 @@ you run malware.
 [bootlin-toolchains]: https://toolchains.bootlin.com/
 
 ## Troubleshooting
+
 <a name=troubleshooting></a>
 
 * __My `/bin/sh` does not support pipefail and I cannot build__
