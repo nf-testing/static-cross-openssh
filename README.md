@@ -298,11 +298,8 @@ lines not being valid digest lines. The important part is that you see
 
 If either the signature or digest verification fail, _do not use_ the
 release. It may be a build failure on my part, corruption on your disk,
-or maybe some bad people are messing with the repositoryi trying to make
+or maybe some bad people are messing with the repository trying to make
 you run malware.
-
-[original-script]: https://gist.github.com/fumiyas/b4aaee83e113e061d1ee8ab95b35608b
-[bootlin-toolchains]: https://toolchains.bootlin.com/
 
 ## Troubleshooting
 
@@ -322,5 +319,8 @@ you run malware.
   ```sh
   export MAKEFLAGS=SHELL=/path/to/my/shell
   ```
+
+[original-script]: https://gist.github.com/fumiyas/b4aaee83e113e061d1ee8ab95b35608b
+[bootlin-toolchains]: https://toolchains.bootlin.com/
 
 <!-- vi: set et sw=2 sts=-1 ts=2 smartindent fo=tcroqna tw=72 : -->
