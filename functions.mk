@@ -30,6 +30,12 @@ endif
 # Wrapper for shell that checks the return value and bails out if there was an error
 shell_checked = $(shell $1)$(if $(filter-out 0,$(.SHELLSTATUS)),$(error Execution of $1 failed with $(.SHELLSTATUS)))
 
+# Validate $(PKG)/VERSION and rewrite it in canonical form, using the function
+# normalize_$(PKG)_version from version.sh. Call it after determine_version.
+# This runs on every make invocation, so the xtrace that version.sh turns on is
+# turned off again. Single quotes in the value are escaped for the shell.
+normalize_version = $(eval override $1/VERSION := $(call shell_checked,{ . ./version.sh; set +x; } 2>/dev/null; normalize_$1_version '$(subst ','\'',$($1/VERSION))'))
+
 # Helpers for smaller build
 # Do not try to make the build smaller
 SHRINK_LEVEL_NONE    :=  0

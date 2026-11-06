@@ -1,30 +1,16 @@
-⚠️ **Migrated to https://codeberg.org/binary-manu/static-cross-openssh** ⚠️
-
-<hr>
-
-  
-**Please take a moment to read this!**
-
-⚠️ This repo is being migrated to https://codeberg.org/binary-manu/static-cross-openssh ⚠️
-
-<s>
-For people interested mainly in prebuilt binaries, they will be kept available at both forges for now, but
-I strongly encourage people to grab them from [the new weekly release at Codeberg](https://codeberg.org/binary-manu/static-cross-openssh/releases/tag/weekly)
-and report any issues there. This GitHub repo is going to be sunset by the end of April 2026.
-</s>
-
-To avoid overloading the smaller Codeberg infrastructure, only the latest weekly release will be available.
-Pipelines now run on a self-hosted Concourse node.
-
-<hr>
-
 # static-cross-openssh: statically cross-compile ssh
 
-[![Get the binaries](https://img.shields.io/badge/Get%20the%20binaries-8a2be2)](https://github.com/binary-manu/static-cross-openssh/actions/workflows/binaries.yaml?query=branch%3Amaster+is%3Asuccess)
-_Click here to grab prebuilt binaries from GitHub artifacts_
-
-_Warning: if you already used this project, please skim through the docs
-again, as a new major rewrite is out and some things work differently._
+> [!WARNING]
+> This is a fork of the excellent
+> [static-cross-openssh](https://codeberg.org/binary-manu/static-cross-openssh)
+> project, which was originally hosted here on GitHub. The linked name
+> will take you directly to its new home on Codeberg. This fork **is
+> not** intended to be a replacement for the original, nor is it intended
+> for general / public use. It includes some very opinionated defaults
+> that may not fit all use cases, and we may change it in ways you find
+> undesirable at any time without warning. If you happened to find this
+> repo by chance while looking for the original, please see the original
+> project instead, by clicking the link above.
 
 This project means to be an easy way to rapidly build cross-compiled,
 static executables for the openssh tools. They
@@ -78,6 +64,7 @@ configuration script (i.e. `./configure --prefix="..."`). The default is
 `SHRINK` defines a _shrink level_, which determines if the build system
 will try to make a smaller build. Currently, the following levels are
 defined:
+
 * `SHRINK_LEVEL_NONE`: create a regular build, without any attempt to
   make it smaller;
 * `SHRINK_LEVEL_BUILD`: make the build smaller by applying only
@@ -122,6 +109,23 @@ following ways:
 * keep it undefined: the default version for the package will be used;
 * define it to an empty string: requests the latest upstream version to be used;
 * define it to a non-empty string: override the default and use this version.
+
+When make parses the makefiles, it validates each package version. If a
+version does not match the release format of the package, make stops with
+an error that shows the value and the expected format. This list gives the
+accepted formats.
+
+* `openssh`: `10.6p2`. Releases from the 2.x and 3.x series use the
+  format `3.8.1p1`. A portable Git tag such as `V_10_6_P2` is also accepted, and the
+  build changes it to `10.6p2`.
+* `openssl`: `4.0.3`. Only OpenSSL 3.0.0 and later are supported.
+  Pre-releases such as `4.1.0-beta2` are not accepted.
+* `zlib`: `1.4` or `1.3.1`. The four-component development tags, for
+  example `1.3.1.2`, are not accepted.
+
+The latest OpenSSH version comes from the OpenBSD mirror listing at
+<https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/>. The latest OpenSSL
+and zlib versions come from the release tags of their GitHub repositories.
 
 For the expected common case of using the latest versions of _all_ components,
 the special variable `__all__/VERSION` shall be defined to `latest`. This
@@ -198,34 +202,36 @@ builds them and prepares a tarball with the static sshd binaries;
 
 ## Directory structure
 
-    .
-    ├── dl                          # All downloads go here
-    │   ├── $arch                   # Divided by architecture
-    │   │   └── __toolchain__       # Since toolchains are prebuilt
-    │   │       └── $version         
-    │   └── noarch                  # But sources are common
-    │       └── $package             
-    │           └── $version        # And we can store multiple versions
-    ├── output                      # All build artifacts go here
-    │   └── $arch                   # Divided by architecture
-    │       ├── bin                 # Binary tarballs go here
-    │       │   └── config          # Along with the config that was used for the build
-    │       ├── build_dir           # Build directories for unpacked sources
-    │       │   ├── $package
-    │       │   │   └── $version
-    │       │   └── __toolchain__
-    │       │       └── $version
-    │       ├── staging_dir         # Staging area for installed stuff
-    │       │   └── $prefix
-    │       └── state_dir           # State files for dependency tracking
-    │           ├── __toolchain__
-    │           │   └── $version
-    │           └── $package
-    │               └── $version
-    └── package
-        ├── openssh
-        ├── openssl
-        └── zlib
+``` txt
+  .
+  ├── dl                          # All downloads go here
+  │   ├── $arch                   # Divided by architecture
+  │   │   └── __toolchain__       # Since toolchains are prebuilt
+  │   │       └── $version
+  │   └── noarch                  # But sources are common
+  │       └── $package
+  │           └── $version        # And we can store multiple versions
+  ├── output                      # All build artifacts go here
+  │   └── $arch                   # Divided by architecture
+  │       ├── bin                 # Binary tarballs go here
+  │       │   └── config          # Along with the config that was used for the build
+  │       ├── build_dir           # Build directories for unpacked sources
+  │       │   ├── $package
+  │       │   │   └── $version
+  │       │   └── __toolchain__
+  │       │       └── $version
+  │       ├── staging_dir         # Staging area for installed stuff
+  │       │   └── $prefix
+  │       └── state_dir           # State files for dependency tracking
+  │           ├── __toolchain__
+  │           │   └── $version
+  │           └── $package
+  │               └── $version
+  └── package
+      ├── openssh
+      ├── openssl
+      └── zlib
+```
 
 ## Examples
 
@@ -256,6 +262,7 @@ your device, if any):
   ```bash
   echo 'root:x:0:0:root:/system/opt/openssh/etc:/system/bin/sh' >> /etc/passwd
   ```
+
 * generate new host keys for your device and copy them under
   `/system/opt/openssh/etc`;
 * finally, upload your public keys to
@@ -265,22 +272,68 @@ your device, if any):
 
 ## Prebuilt binaries
 
-Weekly builds from the latest package versions and toolchain are
-available via GitHub Actions. Click on the status shield at the top of
-the page to go to the CI system, select the pipeline from the week you
-want, and grab the binaries from the artifacts pane.
+<!-- markdownlint-disable MD033 -->
+<a name=verify></a>
+<!-- markdownlint-enable MD033 -->
+
+The latest weekly build from the latest package versions and toolchain
+is available as binary packages. Click on the link at the top of the
+page or go to the releases pane.
 
 Currently, we build for x86-64, ARMv7 and AArch64. ARM versions are available in
 an "Android" variant which simply uses a different installation prefix, to place
 stuff under `/system`.
 
-[original-script]: https://gist.github.com/fumiyas/b4aaee83e113e061d1ee8ab95b35608b
-[bootlin-toolchains]: https://toolchains.bootlin.com/
+For each deliverable `X`, there is also a `X.sha256.asc` file that you can
+download to verify the integrity and authenticity of the release. It contains
+the ASCII-armored GPG signature of the SHA256 digest of the file. To check that
+your release is fine, grab both files, place them side by side and then run:
+
+```sh
+# Grab my public key
+gpg --keyserver keys.openpgp.org --recv-keys 40C859330FFDD306ABFD00DF6AEF14B2ECEFA1C8
+
+# Verify the checksum file and then the release
+gpg --verify X.sha256.asc
+sha256sum -c X.sha256.asc
+```
+
+If everything is fine, the output will look like this:
+
+``` txt
+gpg: key 6AEF14B2ECEFA1C8: public key "binary-manu (Release signing) <binary-manu.hbtjr@slmail.me>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+
+gpg: Signature made Sun May 24 16:12:57 2026 CEST
+gpg:                using RSA key 40C859330FFDD306ABFD00DF6AEF14B2ECEFA1C8
+gpg: Good signature from "binary-manu (Release signing) <binary-manu.hbtjr@slmail.me>" [unknown]
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 40C8 5933 0FFD D306 ABFD  00DF 6AEF 14B2 ECEF A1C8
+
+X: OK
+sha256sum: WARNING: 17 lines are improperly formatted
+```
+
+The `gpg` warning can be suppressed by signing my key with one of yours
+to make it trusted, but otherwise does not affect the verification.
+Warnings from `sha256sum` are harmless: it complains about the signature
+lines not being valid digest lines. The important part is that you see
+`X: OK` (or whatever the file is named) in the output.
+
+If either the signature or digest verification fail, _do not use_ the
+release. It may be a build failure on my part, corruption on your disk,
+or maybe some bad people are messing with the repository trying to make
+you run malware.
 
 ## Troubleshooting
-<a name=troubleshooting></a>
 
-* __My `/bin/sh` does not support pipefail and I cannot build__
+<!-- markdownlint-disable MD033 -->
+<a name=troubleshooting></a>
+<!-- markdownlint-enable MD033 -->
+
+* **My `/bin/sh` does not support pipefail and I cannot build**
 
   This may happen, for example, inside containers using trimmed-down
   shells as `/bin/sh`. You can force `make` to use another shell by
@@ -294,5 +347,8 @@ stuff under `/system`.
   ```sh
   export MAKEFLAGS=SHELL=/path/to/my/shell
   ```
+
+[original-script]: https://gist.github.com/fumiyas/b4aaee83e113e061d1ee8ab95b35608b
+[bootlin-toolchains]: https://toolchains.bootlin.com/
 
 <!-- vi: set et sw=2 sts=-1 ts=2 smartindent fo=tcroqna tw=72 : -->

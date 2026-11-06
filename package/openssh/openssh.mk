@@ -1,23 +1,23 @@
-openssh/DEFAULT_VERSION := V_9_9_P2
+openssh/DEFAULT_VERSION := 10.6p2
 define openssh/determine_latest
   $(eval override openssh/VERSION := $(call shell_checked,
     . ./version.sh;
-	list_github_tags https://github.com/openssh/openssh-portable |
-	sed -En 's/^V_.*$$/&/p' |
-	sort_versions | tail -n 1
+	list_openssh_versions | sort -V | tail -n 1
   ))
 endef
 $(call determine_version,openssh,$(openssh/DEFAULT_VERSION))
+$(call normalize_version,openssh)
 
-openssh/major_version := $(call shell_checked,printf %s '$(openssh/VERSION)' | sed -E 's/^V_([[:digit:]]+).*$$/\1/')
-ifeq "$(openssh/major_version)" ""
-  $(error Unable to parse major from OpenSSH version)
-endif
+openssh/RELEASE_SIGNING_KEY := https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/RELEASE_KEY.asc
 
-openssh/TARBALL := https://github.com/openssh/openssh-portable/archive/refs/tags/$(openssh/VERSION).tar.gz
+# The version is validated above, so this is always a number
+openssh/major_version := $(firstword $(subst ., ,$(openssh/VERSION)))
+
+openssh/TARBALL := https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-$(openssh/VERSION).tar.gz
+openssh/SIGFILE := $(openssh/TARBALL).asc
 openssh/DEPENDS := zlib openssl
 
-openssh/dir = $(build_dir)/openssh/openssh-portable-$(openssh/VERSION)
+openssh/dir = $(build_dir)/openssh/openssh-$(openssh/VERSION)
 openssh/bin = $(bin_dir)/openssh-$(openssh/VERSION).tgz
 openssh/binfiles := \
     sbin/sshd \
@@ -47,7 +47,8 @@ define openssh/build =
 	env PATH='$(host_path)' autoreconf -i
 	./configure LDFLAGS="-static $(LDFLAGS)" LIBS="-lpthread" \
 		--prefix="$(prefix)" --host="$(host_triplet)" --disable-strip \
-		--with-privsep-user=root --with-privsep-path=$(prefix)/var/empty
+		--with-privsep-user=root --with-privsep-path=$(prefix)/var/empty \
+		--disable-wtmp --disable-wtmpx
 	'$(MAKE)'
 endef
 

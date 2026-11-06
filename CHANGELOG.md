@@ -1,4 +1,5 @@
 # Changelog
+<!-- markdownlint-disable MD024 -->
 
 All notable changes to this project will be documented in this file.
 
@@ -11,6 +12,65 @@ made, while the third number is incremented for backward compatible
 changes. For example, versions `0.2.x` are not compatible with `0.1.x`.
 
 ## [Unreleased]
+
+There are no unreleased changes at this time.
+
+## [0.2.8-nf] - 2026-11-06
+
+### Changed
+
+* OpenSSH portable source code archives are now retrieved directly from
+  OpenBSD's CDN rather than from the GitHub mirror's archives.
+* The GPG keys of the maintainers will now be retrieved and imported
+  (meaning `gnupg` is also a new dependency), along with the detached
+  signature file (`.asc`) at the time of the download. We now will verify
+  that signature's validity before extraction, failing if it does not pass.
+* Added some error handling on the archive download `curl` commands and on
+  the `tar` extraction one, hopefully making future step failures clearer.
+* Default versions bumped to the latest non-feature ones for all packages:
+  * OpenSSH moved from `9.9p2` to `10.6p2` to include the fixes for [the
+    `*sshole` bug](https://sshhole.com).
+  * OpenSSL moved from `3.5.0` to `4.0.3` to include fixes for several CVEs.
+  * zlib moved from `1.3.1` to `1.4` to include security fixes, including
+    suggestions from a security review and patches for multiple CVEs.
+* Default config flags were updated to include `--disable-wtmp` and
+  `--disable-wtmpx`
+* Removed `unzip` dependency by switching zlib package retrieval to use the
+  `.tar.gz` archive format.
+* Added a warning to the README to ensure anyone looking for the original
+  finds it rather than using our fork.
+* The build validates the versions of OpenSSH, OpenSSL, and zlib. An
+  invalid version stops make with an error that shows the expected format.
+  Before this change, an invalid OpenSSH version became a wrong value, for
+  example `10.2` became `10.2p10.2`.
+* The latest OpenSSH version now comes from the OpenBSD mirror listing, not
+  from the GitHub tags. The GitHub mirror can lag behind. For example, it
+  has no `V_10_6_P2` tag, so the latest version was `10.6p1`.
+* The latest OpenSSL version now includes OpenSSL 4.x and later. Before this
+  change, only 3.x tags were included, so `__all__/VERSION=latest` selected
+  `3.6.5`. Beta releases are now also excluded.
+* Version sorting now uses `sort -V`. The old sort compared the first field
+  as text, so `9.9p2` came after `10.6p2`.
+* OpenSSL versions before 3.0.0 are rejected. The download URL does not
+  support their tag and archive names.
+
+---
+
+Original upstream changelog follows:
+
+## [0.2.8] - 2026-05-24
+
+### Added
+
+* Sign commits and enable verification in the build pipeline.
+* Add signed digest files for releases.
+* Add verification instructions in the docs.
+
+## [0.2.7] - 2026-03-15
+
+### Changed
+
+* Moved to Codeberg.
 
 ## [0.2.6] - 2025-12-14
 

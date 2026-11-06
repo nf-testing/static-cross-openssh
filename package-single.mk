@@ -25,7 +25,19 @@ define downloadpkg =
 	mkdir -p '$(dl_dir)'
 	cd '$(dl_dir)'
 	if [ -n '$($1/TARBALL)' ]; then
-	  curl -fvL '$($1/TARBALL)' -o '$(dl_dir)/$(notdir $($1/TARBALL))'
+	  curl -fvL '$($1/TARBALL)' -o '$(dl_dir)/$(notdir $($1/TARBALL))' ||
+	    { echo "Failure occurred during $1 archive download" >&2; exit 1; }
+	fi
+	# Signature validation using GPG and the detached signature
+	if [ -n '$($1/SIGFILE)' ] && [ -n '$($1/RELEASE_SIGNING_KEY)' ]; then
+	  curl -fvL '$($1/SIGFILE)' -o '$(dl_dir)/$(notdir $($1/SIGFILE))' ||
+	    { echo "Failure occurred during download of $1 archive's detached signature" >&2; exit 1; }
+	  curl -fvL '$($1/RELEASE_SIGNING_KEY)' -o '$(dl_dir)/$(notdir $($1/RELEASE_SIGNING_KEY))' ||
+	    { echo "Failure occurred during download of $1 release signing key file" >&2; exit 1; }
+	  gpg --import '$(notdir $($1/RELEASE_SIGNING_KEY))' ||
+	    { echo "Failure occurred during GPG key import" >&2; exit 1; }
+	  gpg --verify '$(notdir $($1/SIGFILE))' ||
+	    { echo "The archive failed GPG signature verification" >&2; exit 1; }
 	fi
 endef
 
@@ -33,9 +45,9 @@ define preparepkg =
 	rm -rf '$(build_dir)/$1'
 	mkdir -p '$(build_dir)/$1'
 	cd '$(build_dir)/$1'
-	if [ -n '$($1/TARBALL)' ]; then
-	  tar -xf '$(dl_dir)/$(notdir $($1/TARBALL))' ||
-	    unzip '$(dl_dir)/$(notdir $($1/TARBALL))'
+	if [ -n '$($1/TARBALL)' ] && [ -f '$(dl_dir)/$(notdir $($1/TARBALL))' ]; then
+	  tar -zxvf '$(dl_dir)/$(notdir $($1/TARBALL))' ||
+		{ echo "Failure occurred during $1 archive extraction" >&2; exit 1; }
 	fi
 	$(call depfile,$1,prepare)
 endef

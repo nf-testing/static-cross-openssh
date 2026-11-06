@@ -8,7 +8,7 @@ define __toolchain__/determine_latest
   $(eval override __toolchain__/VERSION := $(call shell_checked,
     . ./version.sh;
     list_bootlin_versions $(arch) |
-    sort_versions |
+    sort -V |
     tail -n 1
 ))
 endef

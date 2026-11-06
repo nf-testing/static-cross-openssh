@@ -1,15 +1,14 @@
-zlib/DEFAULT_VERSION := 1.3.1
+zlib/DEFAULT_VERSION := 1.4
 define zlib/determine_latest
   $(eval override zlib/VERSION := $(call shell_checked,
     . ./version.sh;
-	list_github_tags https://github.com/madler/zlib |
-	sed -En 's/^v(.*)$$/\1/p' |
-	sort_versions | tail -n 1
+	list_zlib_versions | sort -V | tail -n 1
   ))
 endef
 $(call determine_version,zlib,$(zlib/DEFAULT_VERSION))
+$(call normalize_version,zlib)
 
-zlib/TARBALL := https://github.com/madler/zlib/archive/refs/tags/v$(zlib/VERSION).zip
+zlib/TARBALL := https://github.com/madler/zlib/archive/refs/tags/v$(zlib/VERSION).tar.gz
 
 zlib/dir = $(build_dir)/zlib/zlib-$(zlib/VERSION)
 
